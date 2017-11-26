@@ -12,7 +12,9 @@ class DifferentialEvolution:
                  individual=30,
                  digit_setting=100,
                  seed=1234,
-                 function_option=1
+                 function_option=1,
+                 dropout=15,
+                 learning_rate=0.4
                  ):
         # parameter setting
         # random.seed(seed)
@@ -21,11 +23,10 @@ class DifferentialEvolution:
         self.individual_number = individual
         self.digit_setting = digit_setting
         self.function_option = function_option
+        self.dropout = dropout
+        self.learning_rate = learning_rate
         self.dataset = self.initialize_vector(seed)
         self.sort_by_function_value()
-        print(self.dataset)
-        print(type(self.dataset["function_value"][0]))
-        print(type(self.dataset["input_1"][0]))
         self.dataset.to_csv("hoge.csv")
 
     # 初期値の設定
@@ -39,10 +40,11 @@ class DifferentialEvolution:
         # decimal_array = [int_val for int_val in [x for x in random_int]]
         decimal_array = self.decimal_list_maker(random_int)
         random_indivisuals = np.divide(random_int, float(self.digit_setting))
-        if self.function_option == 1:
-            value_array = [function_1(x) for x in random_indivisuals]
-        else:
-            value_array = [function_2(x) for x in random_indivisuals]
+        # if self.function_option == 1:
+        #     value_array = [function_1(x) for x in random_indivisuals]
+        # else:
+        #     value_array = [function_2(x) for x in random_indivisuals]
+        value_array = [self.calculate_function_value(x) for x in random_indivisuals]
 
         dataset = np.concatenate(
             (
@@ -56,12 +58,19 @@ class DifferentialEvolution:
         decimal_columns = ["decimal_" + str(x) for x in range(self.feature_number)]
         columns = input_columns+['function_value']
         pandas_dataset = pd.DataFrame(dataset, columns=columns)
-        print(decimal_array.T[1])
         for i in range(self.feature_number):
             pandas_dataset[decimal_columns[i]] = decimal_array.T[i]
 
-        print(pandas_dataset)
         return pandas_dataset
+
+    def calculate_function_value(self, x):
+        if self.function_option == 1:
+            # value_array = [function_1(x) for x in random_indivisuals]
+            function_value = function_1(x)
+        else:
+            # value_array = [function_2(x) for x in random_indivisuals]
+            function_value = function_1(x)
+        return function_value
 
     def sort_by_function_value(self):
         self.dataset = self.dataset.sort_values(by=['function_value'])
@@ -82,7 +91,38 @@ class DifferentialEvolution:
         return decimal_array
 
     def evolve_training(self):
-        evolve
+        print(self.dataset.shape)
+        record_number = len(self.dataset.index)
+        # print(range(record_number/))
+        for i in range(int(record_number/2), record_number):
+            random_int = np.random.randint(low=0,
+                                           high=int(record_number/2)-1,
+                                           size=3
+                                           )
+            print(random_int)
+            #TODO :  duplicate 判定
+            evolution_seed = [self.dataset.iloc[random_selection]
+                              for random_selection in random_int]
+            evolution_seed = self.dataset.iloc[random_int]
+            new_individual = self.calculate_new_individual(evolution_seed)
+            print(evolution_seed)
+            # for i in range(3):
+
+
+            # print(self.dataset.iloc[i])
+
+    def calculate_new_individual(self, evolution_seed):
+        print(evolution_seed)
+        new_individual = []
+        input_columns = ["input_" + str(x) for x in range(self.feature_number)]
+        for feature in input_columns:
+            tmp = evolution_seed[feature]
+            new_individual.append(tmp.iloc[0] + self.learning_rate * (tmp.iloc[1] - tmp.iloc[2]))
+
+        # function_value_new_individual =
+            #TODO:1
+
+
 
     # def calculate_function_value(self):
         # write something
@@ -111,7 +151,8 @@ if __name__ == "__main__":
         individual=30,
         digit_setting=100,
         seed=1234,
-        function_option=1
+        function_option=1,
+        learning_rate=0.4
     )
     # print(function_1([2,2,2]))
     # print(function_2([2,2]))
