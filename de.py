@@ -7,47 +7,40 @@ import re
 
 class DifferentialEvolution:
     def __init__(self,
-                 feature_number=2,
-                 range=[-5.11, 5.11],
+                 range,
                  individual=30,
                  digit_setting=100,
                  seed=1234,
                  function_option=1,
-                 dropout=15,
                  learning_rate=0.4,
+                 learning_iteration=50,
                  cr=0.5
                  ):
-        # parameter setting
-        # random.seed(seed)
-        self.feature_number = feature_number
+        np.random.seed(seed)
         self.range = range
         self.individual_number = individual
         self.digit_setting = digit_setting
         self.function_option = function_option
-        self.dropout = dropout
+        self.function_calculater = CalculateFunction()
+        self.feature_number = self.function_calculater.\
+            feature_number_each_function(self.function_option)
         self.learning_rate = learning_rate
-        self.cr_value=cr
-        self.dataset = self.initialize_vector(seed)
+        self.cr_value = cr
+        self.learning_iteration = learning_iteration
+        self.dataset = self.initialize_vector()
         self.sort_by_function_value()
-        self.dataset.to_csv("hoge.csv")
 
     # 初期値の設定
-    def initialize_vector(self, seed):
+    def initialize_vector(self):
         # TODO: seed設定うまくいってないっぽい
-        random.seed(seed)
         low, high = [x * self.digit_setting for x in self.range]
         random_int = np.random.randint(low=low,
                                        high=high,
                                        size=(self.individual_number, self.feature_number)
                                        )
-        # decimal_array = [int_val for int_val in [x for x in random_int]]
-        decimal_array = self.decimal_list_maker(random_int)
+        # decimal_array = self.decimal_list_maker(random_int)
         random_indivisuals = np.divide(random_int, float(self.digit_setting))
-        # if self.function_option == 1:
-        #     value_array = [function_1(x) for x in random_indivisuals]
-        # else:
-        #     value_array = [function_2(x) for x in random_indivisuals]
-        value_array = [self.calculate_function_value(x) for x in random_indivisuals]
+        value_array = [self.function_calculater.calculate_function_value(x) for x in random_indivisuals]
 
         dataset = np.concatenate(
             (
@@ -58,74 +51,43 @@ class DifferentialEvolution:
         )
 
         input_columns = ["input_" + str(x) for x in range(self.feature_number)]
-        decimal_columns = ["decimal_" + str(x) for x in range(self.feature_number)]
+        # decimal_columns = ["decimal_" + str(x) for x in range(self.feature_number)]
         columns = input_columns+['function_value']
         pandas_dataset = pd.DataFrame(dataset, columns=columns)
-        for i in range(self.feature_number):
-            pandas_dataset[decimal_columns[i]] = decimal_array.T[i]
+        # for i in range(self.feature_number):
+        #     pandas_dataset[decimal_columns[i]] = decimal_array.T[i]
 
         return pandas_dataset
-
-    def calculate_function_value(self, x):
-        if self.function_option == 1:
-            function_value = function_1(x)
-        else:
-            function_value = function_1(x)
-        return function_value
 
     def sort_by_function_value(self):
         self.dataset = self.dataset.sort_values(by=['function_value'])
 
-    # indivisualの配列を受け取り、それぞれの値を二進数に変換して返す
-    def decimal_list_maker(self, int_np_array):
-        decimal_1darray = []
-        for i in range(np.shape(int_np_array)[0]):
-            indivisual = []
-            for j in range(np.shape(int_np_array)[1]):
-                indivisual.append(self.decimal_maker(int_np_array[i][j]))
-
-            decimal_1darray.append(indivisual)
-
-        decimal_array = np.array(decimal_1darray)
-        return decimal_array
-
-    def decimal_maker(self, x):
-        decimal_value = format(x, '010b')
-        return decimal_value.replace('-', '1')
-
     def evolve_training(self):
-        # print(self.dataset.shape)
         record_number = len(self.dataset.index)
-        # print(range(record_number/))
-        # TODO : record numberの上限値設定
-        for i in range(int(record_number/3), record_number):
-            while(1):
-                random_int = np.random.randint(low=0,
-                                               high=int(record_number/3)-1,
-                                               size=3
-                                               )
-                if self.judge_same_number(random_int):
-                    break
+        for learning_iteration in range(self.learning_iteration):
+            for i in range(int(record_number/2), record_number):
+                while(1):
+                    random_int = np.random.randint(low=0,
+                                                   high=int(record_number/2)-1,
+                                                   size=3
+                                                   )
+                    if self.judge_same_number(random_int):
+                        break
 
-            evolution_seed = self.dataset.iloc[random_int]
-            original_vector = self.dataset.iloc[i]
-            new_individual = self.calculate_new_individual(evolution_seed=evolution_seed,
-                                                           original_vectors=original_vector)
+                evolution_seed = self.dataset.iloc[random_int]
+                original_vector = self.dataset.iloc[i]
+                new_individual = self.calculate_new_individual(evolution_seed=evolution_seed,
+                                                               original_vectors=original_vector)
 
-            input_columns = ["input_" + str(x) for x in range(self.feature_number)]
-            for x, column in enumerate(input_columns):
-               self.dataset[column].iloc[i] = new_individual[x]
+                input_columns = ["input_" + str(x) for x in range(self.feature_number)]
+                for x, column in enumerate(input_columns):
+                    self.dataset[column].iloc[i] = new_individual[x]
 
-            self.dataset["function_value"].iloc[i] = self.calculate_function_value(new_individual)
+                self.dataset["function_value"].iloc[i] = self.function_calculater.calculate_function_value(new_individual)
 
-            # print("evolution_seed")
-            # print(evolution_seed)
-            # print("original_vector")
-            # print(original_vector)
-            # print("new_individual")
-            # print(new_individual)
-
-        self.sort_by_function_value()
+            self.sort_by_function_value()
+            de_analyser.dataset.to_csv("result_" + str(learning_iteration) + ".csv")
+            print(de_analyser.dataset["function_value"].iloc[0])
 
     def judge_same_number(self, array):
         for i in range(len(array)):
@@ -136,15 +98,12 @@ class DifferentialEvolution:
 
     # 今回のDEアルゴリズムの芯の部分
     def calculate_new_individual(self, evolution_seed, original_vectors):
-        # print(evolution_seed)
         new_individual_input = []
         input_columns = ["input_" + str(x) for x in range(self.feature_number)]
         random_position = np.random.randint(low=0, high=self.feature_number, size=1)
         for feature in input_columns:
             rand3_vector = evolution_seed[feature]
             original_vector = original_vectors[feature]
-
-
             # step 1
             donor_vector = rand3_vector.iloc[0] + self.learning_rate * (rand3_vector.iloc[1] - rand3_vector.iloc[2])
             donor_vector = round(donor_vector, 2)
@@ -155,43 +114,49 @@ class DifferentialEvolution:
             else:
                 new_individual_input.append(original_vector)
 
-        function_value_new_individual = self.calculate_function_value(new_individual_input)
-        # print("####################")
-        # print(new_individual_input)
-        # print(function_value_new_individual)
-        # print("####################")
-
-        return [round(x,2) for x in new_individual_input]
+        return new_individual_input
 
 
+class CalculateFunction:
+    def feature_number_each_function(self, function_option):
+        self.function_option = function_option
+        if self.function_option == 1:
+            return 3
+        elif self.function_option == 2:
+            return 2
 
+    def calculate_function_value(self, x):
+        if self.function_option == 1:
+            function_value = self.function_1(x)
+        elif self.function_option == 2:
+            function_value = self.function_2(x)
+        return function_value
 
-def function_1(input_array):
-    if len(input_array) != 3:
-        sys.stderr.write("ERROR : Please input 3 feature array")
-        exit(1)
-    return_value = sum([x**2 for x in input_array])
-    return np.round(return_value, 5)
-    # return [x for x in return_value]
+    def function_1(self, input_array):
+        if len(input_array) != 3:
+            sys.stderr.write("ERROR : Please input 3 feature array")
+            exit(1)
+        return_value = sum([x**2 for x in input_array])
+        return np.round(return_value, 5)
 
-def function_2(input_array):
-    x1, x2 = input_array
-    return 100 * (x1 ** 2 - x2) ** 2 + (1 - x1) ** 2
+    def function_2(self, input_array):
+        if len(input_array) != 2:
+            sys.stderr.write("ERROR : Please input 2 feature array")
+            exit(1)
+        x1, x2 = input_array
+        return 100 * (x1 ** 2 - x2) ** 2 + (1 - x1) ** 2
 
 
 if __name__ == "__main__":
     de_analyser = DifferentialEvolution(
-        feature_number=3,
-        range=[-5.12,5.12],
+        range=[-2.014, 2.014],
+        # range=[-5.12, 5.12],
         individual=100,
         digit_setting=100,
         seed=1234,
-        function_option=1,
+        function_option=2,
         learning_rate=0.4,
+        learning_iteration=50,
         cr=0.3
     )
-
-    for i in range(50):
-        de_analyser.evolve_training()
-        de_analyser.dataset.to_csv("result_" + str(i) + ".csv")
-        print(de_analyser.dataset["function_value"].iloc[0])
+    de_analyser.evolve_training()
