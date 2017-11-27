@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import random
-from decimal import Decimal
 import sys
 import re
 
@@ -38,7 +37,6 @@ class DifferentialEvolution:
                                        high=high,
                                        size=(self.individual_number, self.feature_number)
                                        )
-        # decimal_array = self.decimal_list_maker(random_int)
         random_indivisuals = np.divide(random_int, float(self.digit_setting))
         value_array = [self.function_calculater.calculate_function_value(x) for x in random_indivisuals]
 
@@ -51,11 +49,8 @@ class DifferentialEvolution:
         )
 
         input_columns = ["input_" + str(x) for x in range(self.feature_number)]
-        # decimal_columns = ["decimal_" + str(x) for x in range(self.feature_number)]
         columns = input_columns+['function_value']
         pandas_dataset = pd.DataFrame(dataset, columns=columns)
-        # for i in range(self.feature_number):
-        #     pandas_dataset[decimal_columns[i]] = decimal_array.T[i]
 
         return pandas_dataset
 
