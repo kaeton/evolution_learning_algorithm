@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-import random
 import sys
-import re
+
 
 class DifferentialEvolution:
     def __init__(self,
@@ -39,7 +38,6 @@ class DifferentialEvolution:
                                        )
         random_indivisuals = np.divide(random_int, float(self.digit_setting))
         value_array = [self.function_calculater.calculate_function_value(x) for x in random_indivisuals]
-
         dataset = np.concatenate(
             (
                 random_indivisuals,
