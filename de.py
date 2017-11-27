@@ -99,7 +99,6 @@ class DifferentialEvolution:
             original_vector = original_vectors[feature]
             # step 1
             donor_vector = rand3_vector.iloc[0] + self.learning_rate * (rand3_vector.iloc[1] - rand3_vector.iloc[2])
-            donor_vector = round(donor_vector, 2)
             # step 2
             random_value = np.random.randint(low=0, high=100, size=1)[0]/100.0
             if (feature == random_position) or self.cr_value < random_value:
@@ -130,7 +129,7 @@ class CalculateFunction:
             sys.stderr.write("ERROR : Please input 3 feature array")
             exit(1)
         return_value = sum([x**2 for x in input_array])
-        return np.round(return_value, 5)
+        return return_value
 
     def function_2(self, input_array):
         if len(input_array) != 2:
