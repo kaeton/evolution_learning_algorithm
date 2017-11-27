@@ -32,12 +32,14 @@ class DifferentialEvolution:
     def initialize_vector(self):
         # TODO: seed設定うまくいってないっぽい
         low, high = [x * self.digit_setting for x in self.range]
-        random_int = np.random.randint(low=low,
-                                       high=high,
-                                       size=(self.individual_number, self.feature_number)
-                                       )
+        random_int = np.random.randint(
+            low=low,
+            high=high,
+            size=(self.individual_number, self.feature_number)
+        )
         random_indivisuals = np.divide(random_int, float(self.digit_setting))
-        value_array = [self.function_calculater.calculate_function_value(x) for x in random_indivisuals]
+        value_array = [self.function_calculater.calculate_function_value(x)
+                       for x in random_indivisuals]
         dataset = np.concatenate(
             (
                 random_indivisuals,
@@ -69,17 +71,22 @@ class DifferentialEvolution:
 
                 evolution_seed = self.dataset.iloc[random_int]
                 original_vector = self.dataset.iloc[i]
-                new_individual = self.calculate_new_individual(evolution_seed=evolution_seed,
-                                                               original_vectors=original_vector)
+                new_individual = self.calculate_new_individual(
+                    evolution_seed=evolution_seed,
+                    original_vectors=original_vector
+                )
 
-                input_columns = ["input_" + str(x) for x in range(self.feature_number)]
+                input_columns = ["input_" + str(x)
+                                 for x in range(self.feature_number)]
                 for x, column in enumerate(input_columns):
                     self.dataset[column].iloc[i] = new_individual[x]
 
                 self.dataset["function_value"].iloc[i] = self.function_calculater.calculate_function_value(new_individual)
 
             self.sort_by_function_value()
-            de_analyser.dataset.to_csv("result_" + str(learning_iteration) + ".csv")
+            de_analyser.dataset.to_csv(
+                "result_" + str(learning_iteration) + ".csv"
+            )
             print(de_analyser.dataset["function_value"].iloc[0])
 
     def judge_same_number(self, array):
@@ -93,14 +100,25 @@ class DifferentialEvolution:
     def calculate_new_individual(self, evolution_seed, original_vectors):
         new_individual_input = []
         input_columns = ["input_" + str(x) for x in range(self.feature_number)]
-        random_position = np.random.randint(low=0, high=self.feature_number, size=1)
+        random_position = np.random.randint(
+            low=0,
+            high=self.feature_number,
+            size=1
+        )
         for feature in input_columns:
             rand3_vector = evolution_seed[feature]
             original_vector = original_vectors[feature]
             # step 1
-            donor_vector = rand3_vector.iloc[0] + self.learning_rate * (rand3_vector.iloc[1] - rand3_vector.iloc[2])
+            donor_vector = \
+                rand3_vector.iloc[0] + \
+                self.learning_rate * \
+                (rand3_vector.iloc[1] - rand3_vector.iloc[2])
             # step 2
-            random_value = np.random.randint(low=0, high=100, size=1)[0]/100.0
+            random_value = np.random.randint(
+                low=0,
+                high=100,
+                size=1
+            )[0] / 100.0
             if (feature == random_position) or self.cr_value < random_value:
                 new_individual_input.append(donor_vector)
             else:
