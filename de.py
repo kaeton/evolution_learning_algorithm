@@ -94,86 +94,76 @@ class DifferentialEvolution:
         return decimal_value.replace('-', '1')
 
     def evolve_training(self):
-        print(self.dataset.shape)
+        # print(self.dataset.shape)
         record_number = len(self.dataset.index)
         # print(range(record_number/))
         # TODO : record numberの上限値設定
-        for i in range(int(record_number/2), record_number):
-            random_int = np.random.randint(low=0,
-                                           high=int(record_number/2)-1,
-                                           size=3
-                                           )
-            print(random_int)
-            #TODO :  duplicate 判定
-            evolution_seed = [self.dataset.iloc[random_selection]
-                              for random_selection in random_int]
+        for i in range(int(record_number/3), record_number):
+            while(1):
+                random_int = np.random.randint(low=0,
+                                               high=int(record_number/3)-1,
+                                               size=3
+                                               )
+                if self.judge_same_number(random_int):
+                    break
+
             evolution_seed = self.dataset.iloc[random_int]
             original_vector = self.dataset.iloc[i]
             new_individual = self.calculate_new_individual(evolution_seed=evolution_seed,
                                                            original_vectors=original_vector)
-            print("evolution_seed")
-            print(evolution_seed)
-            print("original_vector")
-            print(original_vector)
-            print("new_individual")
-            print(new_individual)
 
-            print("break")
-            # for i in range(3):
+            input_columns = ["input_" + str(x) for x in range(self.feature_number)]
+            for x, column in enumerate(input_columns):
+               self.dataset[column].iloc[i] = new_individual[x]
 
+            self.dataset["function_value"].iloc[i] = self.calculate_function_value(new_individual)
 
-            # print(self.dataset.iloc[i])
+            # print("evolution_seed")
+            # print(evolution_seed)
+            # print("original_vector")
+            # print(original_vector)
+            # print("new_individual")
+            # print(new_individual)
+
+        self.sort_by_function_value()
+
+    def judge_same_number(self, array):
+        for i in range(len(array)):
+            if array[i] in array[i+1:]:
+                return False
+
+        return True
 
     # 今回のDEアルゴリズムの芯の部分
     def calculate_new_individual(self, evolution_seed, original_vectors):
-        print(evolution_seed)
+        # print(evolution_seed)
         new_individual_input = []
         input_columns = ["input_" + str(x) for x in range(self.feature_number)]
-        # TODO : ここ全体やばい、二重ループ不要
+        random_position = np.random.randint(low=0, high=self.feature_number, size=1)
         for feature in input_columns:
             rand3_vector = evolution_seed[feature]
             original_vector = original_vectors[feature]
 
 
-            print(original_vector)
             # step 1
             donor_vector = rand3_vector.iloc[0] + self.learning_rate * (rand3_vector.iloc[1] - rand3_vector.iloc[2])
-            print(donor_vector)
             donor_vector = round(donor_vector, 2)
-            print(donor_vector)
-            random_position = np.random.randint(low=0, high=self.feature_number, size=1)
             # step 2
-            for i in range(self.feature_number):
-                random_value = np.random.randint(low=0, high=100, size=1)[0]/100.0
-                if (i == random_position) or self.cr_value < random_value:
-                    new_individual_input.append(donor_vector)
-                else:
-                    new_individual_input.append(original_vector)
-
-        print(new_individual_input)
-
-        return new_individual_input
-
-
-
-
-
-
-
-
-
+            random_value = np.random.randint(low=0, high=100, size=1)[0]/100.0
+            if (feature == random_position) or self.cr_value < random_value:
+                new_individual_input.append(donor_vector)
+            else:
+                new_individual_input.append(original_vector)
 
         function_value_new_individual = self.calculate_function_value(new_individual_input)
-        print(function_value_new_individual)
+        # print("####################")
+        # print(new_individual_input)
+        # print(function_value_new_individual)
+        # print("####################")
+
+        return [round(x,2) for x in new_individual_input]
 
 
-
-
-    # def calculate_function_value(self):
-        # write something
-
-    # def evolution(self):
-        # lskalks
 
 
 def function_1(input_array):
@@ -192,15 +182,16 @@ def function_2(input_array):
 if __name__ == "__main__":
     de_analyser = DifferentialEvolution(
         feature_number=3,
-        range=[-5.11,5.11],
-        individual=30,
+        range=[-5.12,5.12],
+        individual=100,
         digit_setting=100,
         seed=1234,
         function_option=1,
         learning_rate=0.4,
-        cr=0.5
+        cr=0.3
     )
-    # print(function_1([2,2,2]))
-    # print(function_2([2,2]))
 
-    de_analyser.evolve_training()
+    for i in range(50):
+        de_analyser.evolve_training()
+        de_analyser.dataset.to_csv("result_" + str(i) + ".csv")
+        print(de_analyser.dataset["function_value"].iloc[0])
