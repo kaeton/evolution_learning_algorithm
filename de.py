@@ -30,7 +30,6 @@ class DifferentialEvolution:
 
     # 初期値の設定
     def initialize_vector(self):
-        # TODO: seed設定うまくいってないっぽい
         low, high = [x * self.digit_setting for x in self.range]
         random_int = np.random.randint(
             low=low,
@@ -62,10 +61,11 @@ class DifferentialEvolution:
         for learning_iteration in range(self.learning_iteration):
             for i in range(int(record_number/2), record_number):
                 while(1):
-                    random_int = np.random.randint(low=0,
-                                                   high=int(record_number/2)-1,
-                                                   size=3
-                                                   )
+                    random_int = np.random.randint(
+                        low=0,
+                        high=int(record_number/2)-1,
+                        size=3
+                    )
                     if self.judge_same_number(random_int):
                         break
 
@@ -167,6 +167,6 @@ if __name__ == "__main__":
         function_option=2,
         learning_rate=0.4,
         learning_iteration=50,
-        cr=0.3
+        cr=0.5
     )
     de_analyser.evolve_training()
